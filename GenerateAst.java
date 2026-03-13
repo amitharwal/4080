@@ -20,7 +20,8 @@ public class GenerateAst {
                 "Literal  : Object value",
                 "Logical  : Expr left, Token operator, Expr right",
                 "Unary    : Token operator, Expr right",
-                "Variable : Token name"
+                "Variable : Token name",
+                "Class      : Token name, List<Stmt.Function> methods, List<Stmt.Function> classMethods")
         ));
 
         defineAst(outputDir, "Stmt", Arrays.asList(
@@ -34,6 +35,49 @@ public class GenerateAst {
                 "While      : Expr condition, Stmt body"
         ));
     }
+    private Stmt classDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect class name.");
+
+        List<Stmt.Function> methods = new ArrayList<>();
+        List<Stmt.Function> classMethods = new ArrayList<>();
+        consume(LEFT_BRACE, "Expect '{' before class body.");
+
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            boolean isClassMethod = match(CLASS);
+            (isClassMethod ? classMethods : methods).add(function("method"));
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after class body.");
+
+        return new Stmt.Class(name, methods, classMethods);
+    }
+
+    private Stmt.Function function(String kind) {
+        Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
+
+        List<Token> parameters = null;
+
+        // Allow omitting the parameter list entirely in method getters.
+        if (!kind.equals("method") || check(LEFT_PAREN)) {
+            consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
+            parameters = new ArrayList<>();
+            if (!check(RIGHT_PAREN)) {
+                do {
+                    if (parameters.size() >= 255) {
+                        error(peek(), "Can't have more than 255 parameters.");
+                    }
+
+                    parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+                } while (match(COMMA));
+            }
+            consume(RIGHT_PAREN, "Expect ')' after parameters.");
+        }
+
+        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        List<Stmt> body = block();
+        return new Stmt.Function(name, parameters, body);
+    }
+
     private static void defineAst(
             String outputDir, String baseName, List<String> types)
             throws IOException {
