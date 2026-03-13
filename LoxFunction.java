@@ -88,4 +88,24 @@ class LoxFunction implements LoxCallable {
         return null;
     }
 //< function-call
+
+    LoxFunction findMethod(LoxInstance instance, String name) {
+        LoxFunction method = null;
+        LoxFunction inner = null;
+        LoxClass klass = this;
+        while (klass != null) {
+            if (klass.methods.containsKey(name)) {
+                inner = method;
+                method = klass.methods.get(name);
+            }
+
+            klass = klass.superclass;
+        }
+
+        if (method != null) {
+            return method.bind(instance, inner);
+        }
+
+        return null;
+    }.
 }
