@@ -101,7 +101,8 @@ typedef enum {
   VAL_NIL, // [user-types]
   VAL_NUMBER,
 //> Strings val-obj
-  VAL_OBJ
+  VAL_OBJ,
+  VAL_SHORT_STRING // homework 15
 //< Strings val-obj
 } ValueType;
 
@@ -110,6 +111,11 @@ typedef enum {
 typedef double Value;
 */
 //> Types of Values value
+struct {
+  uint8_t length;
+  char chars[SHORT_STRING_MAX];
+} shortString;
+
 typedef struct {
   ValueType type;
   union {
